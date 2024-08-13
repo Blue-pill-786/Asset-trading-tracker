@@ -9,9 +9,9 @@ module.exports = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
     // Find user by ID decoded from the token
-    // const user = await User.findById(decoded.userId);
+    const user = await User.findById(decoded.userId);
    
-    // if (!user) return res.status(401).json({ message: 'User not found' });
+    if (!user) return res.status(401).json({ message: 'User not found' });
 
     // Set the userId in the request object
     req.userId = user._id;
