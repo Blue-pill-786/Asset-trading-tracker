@@ -20,8 +20,14 @@ app.use('/assets', assetRoutes);
 app.use('/requests', requestRoutes);
 app.get('/users/:id/assets', auth, getUserAssets)
 
-db.connect();
+db();
 const PORT = process.env.PORT || 3000;
+
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`Server is running in test mode on port ${PORT}`);
+  });
+}
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

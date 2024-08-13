@@ -8,7 +8,7 @@ const requestToBuy = async (req, res) => {
     const asset = await Asset.findById(req.params.id);
     if (!asset) return res.status(404).json({ message: 'Asset not found' });
 
-    const request = new Request({ asset: asset._id, buyer: req.userId, proposedPrice });
+    const request = new Request({ asset: asset._id, buyer: req.userId,currentHolder: asset.currentHolder, proposedPrice });
     await request.save();
     res.status(201).json({ message: 'Purchase request sent' });
   } catch (error) {
@@ -22,7 +22,7 @@ const negotiateRequest = async (req, res) => {
   try {
     const request = await Request.findById(req.params.id);
     if (!request) return res.status(404).json({ message: 'Request not found' });
-    if (!request.asset.currentHolder.equals(req.userId)) return res.status(403).json({ message: 'Not authorized' });
+    if (!request.currentHolder.equals(req.userId)) return res.status(403).json({ message: 'Not authorized' });
 
     request.proposedPrice = newProposedPrice;
     await request.save();
@@ -37,7 +37,7 @@ const acceptRequest = async (req, res) => {
   try {
     const request = await Request.findById(req.params.id);
     if (!request) return res.status(404).json({ message: 'Request not found' });
-    if (!request.asset.currentHolder.equals(req.userId)) return res.status(403).json({ message: 'Not authorized' });
+    if (!request.currentHolder.equals(req.userId)) return res.status(403).json({ message: 'Not authorized' });
 
     const asset = await Asset.findById(request.asset);
     asset.currentHolder = request.buyer;
@@ -58,7 +58,7 @@ const denyRequest = async (req, res) => {
   try {
     const request = await Request.findById(req.params.id);
     if (!request) return res.status(404).json({ message: 'Request not found' });
-    if (!request.asset.currentHolder.equals(req.userId)) return res.status(403).json({ message: 'Not authorized' });
+    if (!request.currentHolder.equals(req.userId)) return res.status(403).json({ message: 'Not authorized' });
 
     await request.updateOne({ status: 'denied' });
     res.status(200).json({ message: 'Request denied' });

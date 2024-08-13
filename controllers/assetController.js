@@ -5,6 +5,7 @@ const createAsset = async (req, res) => {
   const { name, description, image, status } = req.body;
   try {
     const asset = new Asset({ name, description, image, status, creator: req.userId, currentHolder: req.userId });
+   
     await asset.save();
     res.status(201).json({ message: 'Asset created successfully', assetId: asset._id });
   } catch (error) {

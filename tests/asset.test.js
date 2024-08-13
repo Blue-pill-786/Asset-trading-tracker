@@ -1,67 +1,53 @@
 const request = require('supertest');
-const app = require('../app'); // Adjust the path according to your file structure
+const app = require('../app'); // Adjust the path to your app file
 
-let token;
+describe('Asset Management', () => {
+  let token;
+  let assetId;
 
-beforeAll(async () => {
-  // You may need to sign up a user to obtain a token if your tests depend on authentication
-  const response = await request(app)
-    .post('/signup')
-    .send({ username: 'testuser', password: 'testpass' });
-  token = response.body.token; // Adjust according to your actual response structure
-});
+  beforeAll(async () => {
+    const loginResponse = await request(app)
+      .post('/auth/login')
+      .send({ username: 'testuser', password: 'password123' });
+    token = loginResponse.body.token;
+  });
 
-beforeEach(async () => {
-  // Clear out the database collections
-  await mongoose.connection.db.dropDatabase();
-});
+  test('should create an asset as a draft', async () => {
+    const response = await request(app)
+      .post('/assets')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'Test Asset', status: 'draft' });
+    expect(response.statusCode).toBe(201);
+    expect(response.body).toHaveProperty('status', 'draft');
+  });
 
-test('should signup a user', async () => {
-  const response = await request(app)
-    .post('/signup')
-    .send({ username: 'newuser', password: 'newpass' });
+  test('should create an asset as published', async () => {
+    const response = await request(app)
+      .post('/assets')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'Test Asset Published', status: 'published' });
+    expect(response.statusCode).toBe(201);
+    expect(response.body).toHaveProperty('status', 'published');
+  });
 
-  expect(response.statusCode).toBe(201);
-  expect(response.body.message).toBe('User created successfully');
-  expect(response.body.token).toBeDefined();
-});
+  test('should retrieve asset details', async () => {
+    const assetResponse = await request(app)
+      .post('/assets')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'Test Asset Details', status: 'published' });
+    assetId = assetResponse.body._id;
 
-test('should fail signup with duplicate username', async () => {
-  await request(app)
-    .post('/signup')
-    .send({ username: 'testuser', password: 'testpass' });
+    const response = await request(app)
+      .get(`/assets/${assetId}`);
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toHaveProperty('name', 'Test Asset Details');
+  });
 
-  const response = await request(app)
-    .post('/signup')
-    .send({ username: 'testuser', password: 'anotherpass' });
-
-  expect(response.statusCode).toBe(400);
-  expect(response.body.error).toBe('User already exists');
-});
-
-test('should login a user', async () => {
-  await request(app)
-    .post('/signup')
-    .send({ username: 'testuser', password: 'testpass' });
-
-  const response = await request(app)
-    .post('/login')
-    .send({ username: 'testuser', password: 'testpass' });
-
-  expect(response.statusCode).toBe(200);
-  expect(response.body.message).toBe('Login successful');
-  expect(response.body.token).toBeDefined();
-});
-
-test('should fail login with invalid credentials', async () => {
-  await request(app)
-    .post('/signup')
-    .send({ username: 'testuser', password: 'testpass' });
-
-  const response = await request(app)
-    .post('/login')
-    .send({ username: 'testuser', password: 'wrongpass' });
-
-  expect(response.statusCode).toBe(401);
-  expect(response.body.error).toBe('Invalid credentials');
+  test('should retrieve user\'s assets', async () => {
+    const response = await request(app)
+      .get('/assets/user')
+      .set('Authorization', `Bearer ${token}`);
+    expect(response.statusCode).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+  });
 });
