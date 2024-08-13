@@ -15,7 +15,6 @@ module.exports = async (req, res, next) => {
 
     // Set the userId in the request object
     req.userId = user._id;
-    console.log(user._id)
     next();
   } catch (error) {
     console.error('Authentication error:', error); // Log the error for debugging

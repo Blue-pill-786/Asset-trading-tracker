@@ -4,7 +4,6 @@ const Asset = require('../models/Asset');
 const createAsset = async (req, res) => {
   const { name, description, image, status } = req.body;
   try {
-    console.log(req.userId)
     const asset = new Asset({ name, description, image, status, creator: req.userId, currentHolder: req.userId });
     await asset.save();
     res.status(201).json({ message: 'Asset created successfully', assetId: asset._id });
@@ -57,7 +56,6 @@ const getAssetDetails = async (req, res) => {
 // Get User's Assets
 const getUserAssets = async (req, res) => {
   try {
-    console.log(req.params.id)
     const userId = req.params.id
     const assets = await Asset.find({
       $or: [
